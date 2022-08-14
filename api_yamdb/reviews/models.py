@@ -17,6 +17,9 @@ class Genre(models.Model):
         unique=True
     )
 
+    class Meta:
+        ordering = ['id']
+
 
 class Category(models.Model):
     name = models.CharField(
@@ -27,6 +30,9 @@ class Category(models.Model):
         verbose_name='Слаг категории',
         unique=True
     )
+
+    class Meta:
+        ordering = ['id']
 
 
 class Title(models.Model):
@@ -59,6 +65,9 @@ class Title(models.Model):
         rating = reviews.aggregate(Avg('score'))
         self.rating = round(rating['score__avg'], 2)
         self.save()
+
+    class Meta:
+        ordering = ['-year']
 
 
 class GenresTitles(models.Model):

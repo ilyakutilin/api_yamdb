@@ -28,3 +28,4 @@ class User(AbstractUser):
                 fields=['email', 'username'],
             ),
         ]
+        ordering = ['id']
