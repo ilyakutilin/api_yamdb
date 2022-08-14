@@ -1,6 +1,8 @@
 from django.contrib.auth import get_user_model
 from django.db import models
-
+from django.db.models import Avg
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 User = get_user_model()
 
@@ -33,7 +35,7 @@ class Title(models.Model):
         max_length=256
     )
     year = models.IntegerField(verbose_name='Год производства')
-    rating = models.FloatField(verbose_name='Рейтинг')
+    rating = models.FloatField(verbose_name='Рейтинг', null=True)
     description = models.CharField(
         verbose_name='Описание',
         max_length=2048
@@ -45,6 +47,12 @@ class Title(models.Model):
         verbose_name='Категория',
         null=True
     )
+
+    def update_rating(self):
+        reviews = Review.objects.filter(title=self.pk)
+        rating = reviews.aggregate(Avg('score'))
+        self.rating = rating['score__avg']
+        self.save()
 
 
 class GenresTitles(models.Model):
@@ -125,3 +133,9 @@ class Comment(models.Model):
         verbose_name='Дата публикации',
         auto_now_add=True
     )
+
+
+@receiver(post_save, sender=Review)
+def update_rating(sender, instance, created, **kwargs):
+    print(instance)
+    instance.title.update_rating()
