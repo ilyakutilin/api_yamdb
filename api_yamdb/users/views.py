@@ -1,4 +1,3 @@
-from django.shortcuts import get_object_or_404
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -21,6 +20,9 @@ class SignUpAPIView(APIView):
         serializer = SignUpSerializer(data=self.request.data)
         if serializer.is_valid():
             user = serializer.save()
+            # Используем функцию генерации и отправки кода подтверждения.
+            # Функции передаем объект пользователя и данные,
+            # полученные от сериализатора.
             generate_and_send_confrimation_code(
                 user=user,
                 data=serializer.data
@@ -36,11 +38,7 @@ class ObtainJWTTokenAPIView(APIView):
 
     def post(self, request):
         """POST-запрос на получение JWT-токена."""
-        user = get_object_or_404(
-            User,
-            username=self.request.data.get('username')
-        )
-        serializer = ObtainJWTTokenSerializer(user, self.request.data)
+        serializer = ObtainJWTTokenSerializer(data=self.request.data)
         if serializer.is_valid():
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(
@@ -71,12 +69,13 @@ class UserViewSet(viewsets.ModelViewSet):
     def me(self, request, *args, **kwargs):
         """Доступ пользователя к своему профилю.
 
+        Профиль доступен любому аутентифицированному пользователю.
         Метод запроса GET - получение информации о себе.
         Метод запроса PATCH - обновление полей своего профиля.
         Обновление роли недоступно.
+        Роль может быть обновлена администратором через users/<username>.
         """
-        self.object = get_object_or_404(
-            User, username=self.request.user.username)
+        self.object = User.objects.get(username=self.request.user.username)
         if request.method == 'PATCH':
             serializer = ProfileSerializer(
                 self.object,

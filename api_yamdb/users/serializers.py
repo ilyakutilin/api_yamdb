@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.exceptions import NotFound
 from rest_framework.validators import UniqueTogetherValidator
 
 from .models import User
@@ -36,11 +37,28 @@ class ObtainJWTTokenSerializer(serializers.Serializer):
 
     def get_token(self, obj):
         """Проверка кода подтверждения и получение JWT токена."""
+        # В obj приходит OrderedDict с отправленным пользователем username.
+        # Достаем его по ключу 'username'.
+        username = obj['username']
+        # Если пользователя с таким username не существует,
+        # выбрасываем исключение со статусом 404.
+        user_queryset = User.objects.filter(username=username)
+        if not user_queryset.exists():
+            raise NotFound(
+                detail=f'Пользователя с именем {username} не существует'
+            )
+        # Получаем объект пользователя и код подтверждения.
+        user = User.objects.get(username=username)
+        confirmation_code = self.initial_data.get('confirmation_code')
+        # Передаем их в функцию проверки кода подтверждения.
+        # Если код неверный - вызываем ошибку валидации.
         if not check_confimation_code(
-                user=obj,
-                confirmation_code=self.initial_data.get('confirmation_code')):
+                user=user,
+                confirmation_code=confirmation_code):
             raise serializers.ValidationError('Неверный код подтверждения')
-        return get_jwt_token(user=obj)
+        # Передаем объект пользователя в функцию генерации JWT токена,
+        # генерируем и возвращаем токен.
+        return get_jwt_token(user=user)
 
 
 class UserSerializer(serializers.ModelSerializer):
