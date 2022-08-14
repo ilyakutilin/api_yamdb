@@ -45,7 +45,11 @@ class Title(models.Model):
         verbose_name='Категория',
         null=True
     )
-
+    # Уточнить с группой!
+    genre = models.ManyToManyField(
+        Genre, 
+        through='GenresTitles'
+    )
 
 class GenresTitles(models.Model):
     title = models.ForeignKey(
