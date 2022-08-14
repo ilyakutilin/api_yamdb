@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from reviews.models import (Category, Comment, Genre, GenresTitles, Review,
-                           Title, User)
+                            Title, User)
 
 DIR_FILES = os.path.join(settings.BASE_DIR, 'static/data/')
 
@@ -30,7 +30,7 @@ def run_script():
                 user = User.objects.create_user(
                     username=row['username'],
                     email=row['email'],
-                    #role=row['role'], # TODO
+                    role=row['role'],
                     bio=row['bio'],
                     first_name=row['first_name'],
                     last_name=row['last_name']

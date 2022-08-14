@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
-from reviews.models import Category, Genre, GenresTitles, Title, Comment, Review
-from rest_framework.exceptions import ValidationError
+from reviews.models import (Category, Comment, Genre, GenresTitles, Review,
+                            Title)
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -66,6 +66,7 @@ class SaveTitleSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         return TitleSerializer().to_representation(instance)
+
 
 class TitleSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)

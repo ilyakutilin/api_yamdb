@@ -1,16 +1,15 @@
-from rest_framework import filters, viewsets
-from rest_framework.exceptions import NotFound, ValidationError
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.response import Response
-from rest_framework import status
+from reviews.models import Category, Comment, Genre, Review, Title
 
-from reviews.models import Category, Genre, Title, Comment, Review
 from .filter import TitleFilter
 from .permissions import IsAdminOrReadOnly, IsOwnerOrAdminOrReadOnly
-from .serializers import (CategorySerializer, GenreSerializer, TitleSerializer,
-                          CommentSerializer, ReviewSerializer, SaveTitleSerializer)
-
-from django_filters.rest_framework import DjangoFilterBackend
+from .serializers import (CategorySerializer, CommentSerializer,
+                          GenreSerializer, ReviewSerializer,
+                          SaveTitleSerializer, TitleSerializer)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -34,7 +33,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
         )
         if review.exists():
             raise ValidationError(
-                detail=f'Отзыв на произведение уже существует',
+                detail='Отзыв на произведение уже существует',
             )
         serializer.save(author=self.request.user, title=title[0])
 
@@ -71,10 +70,11 @@ class TitleViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
 
-    def get_serializer_class(self): 
-        if self.request.method in ['POST', 'PATCH']: 
+    def get_serializer_class(self):
+        if self.request.method in ['POST', 'PATCH']:
             return SaveTitleSerializer
         return TitleSerializer
+
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
@@ -83,7 +83,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     search_fields = ('name',)
 
-    @action(detail=False, methods=['delete',], url_path=r'(?P<slug>[-\w]+)')
+    @action(detail=False, methods=['delete'], url_path=r'(?P<slug>[-\w]+)')
     def delete_by_slug(self, request, slug):
         category = Category.objects.filter(slug=slug)
         if not category.exists():
@@ -101,7 +101,7 @@ class GenreViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     search_fields = ('name',)
 
-    @action(detail=False, methods=['delete',], url_path=r'(?P<slug>[-\w]+)')
+    @action(detail=False, methods=['delete'], url_path=r'(?P<slug>[-\w]+)')
     def delete_by_slug(self, request, slug):
         genre = Genre.objects.filter(slug=slug)
         if not genre.exists():
@@ -110,4 +110,3 @@ class GenreViewSet(viewsets.ModelViewSet):
             )
         genre[0].delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
