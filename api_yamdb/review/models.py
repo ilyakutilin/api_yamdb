@@ -48,6 +48,12 @@ class Title(models.Model):
         null=True
     )
 
+    # Уточнить с группой!
+    genre = models.ManyToManyField(
+        Genre,
+        through='GenresTitles'
+    )
+
     def update_rating(self):
         reviews = Review.objects.filter(title=self.pk)
         rating = reviews.aggregate(Avg('score'))
