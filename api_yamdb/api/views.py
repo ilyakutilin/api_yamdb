@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from reviews.models import Category, Genre, Title, Comment, Review
-
+from .filter import TitleFilter
 from .permissions import IsAdminOrReadOnly, IsOwnerOrAdminOrReadOnly
 from .serializers import (CategorySerializer, GenreSerializer, TitleSerializer,
                           CommentSerializer, ReviewSerializer, SaveTitleSerializer)
@@ -69,7 +69,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     permission_classes = [IsAdminOrReadOnly]
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('category', 'genre', 'name', 'year')
+    filterset_class = TitleFilter
 
     def get_serializer_class(self): 
         if self.request.method in ['POST', 'PATCH']: 
