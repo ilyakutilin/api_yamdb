@@ -57,7 +57,7 @@ class Title(models.Model):
     def update_rating(self):
         reviews = Review.objects.filter(title=self.pk)
         rating = reviews.aggregate(Avg('score'))
-        self.rating = rating['score__avg']
+        self.rating = round(rating['score__avg'], 2)
         self.save()
 
 
@@ -117,6 +117,15 @@ class Review(models.Model):
     def __str__(self):
         return f'Отзыв {self.author} на {self.title.name}'
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                name='review_author_title_is_unique',
+                fields=['author', 'title']
+            )
+        ]
+        ordering = ['pub_date']
+
 
 class Comment(models.Model):
     review = models.ForeignKey(
@@ -140,8 +149,10 @@ class Comment(models.Model):
         auto_now_add=True
     )
 
+    class Meta:
+        ordering = ['pub_date']
+
 
 @receiver(post_save, sender=Review)
 def update_rating(sender, instance, created, **kwargs):
-    print(instance)
     instance.title.update_rating()

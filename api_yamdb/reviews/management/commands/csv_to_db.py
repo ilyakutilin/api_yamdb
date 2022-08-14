@@ -4,7 +4,7 @@ import os
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
-from review.models import (Category, Comment, Genre, GenresTitles, Review,
+from reviews.models import (Category, Comment, Genre, GenresTitles, Review,
                            Title, User)
 
 DIR_FILES = os.path.join(settings.BASE_DIR, 'static/data/')

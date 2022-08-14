@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
-from review.models import Category, Genre, GenresTitles, Title, Comment, Review
+from reviews.models import Category, Genre, GenresTitles, Title, Comment, Review
+from rest_framework.exceptions import ValidationError
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -14,7 +15,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         fields = ('id', 'text', 'author', 'score', 'pub_date')
 
 
-class CommentSerizlizer(serializers.ModelSerializer):
+class CommentSerializer(serializers.ModelSerializer):
     author = SlugRelatedField(
         read_only=True,
         slug_field='username'
@@ -39,28 +40,38 @@ class GenreSerializer(serializers.ModelSerializer):
         fields = ('name', 'slug')
 
 
-class TitleSerializer(serializers.ModelSerializer):
+class SaveTitleSerializer(serializers.ModelSerializer):
     category = SlugRelatedField(
-        read_only=True,
-        slug_field='slug'
+        slug_field='slug',
+        queryset=Category.objects.all(),
     )
-    genre = GenreSerializer(many=True)
+    genre = SlugRelatedField(
+        slug_field='slug',
+        queryset=Genre.objects.all(),
+        many=True
+    )
+
+    class Meta:
+        model = Title
+        fields = ('id', 'name', 'year',
+                  'description', 'genre', 'category')
+
+    def create(self, validated_data):
+        genres = validated_data.pop('genre')
+        title = Title.objects.create(**validated_data)
+        for genre in genres:
+            GenresTitles.objects.create(
+                genre=genre, title=title)
+        return title
+
+    def to_representation(self, instance):
+        return TitleSerializer().to_representation(instance)
+
+class TitleSerializer(serializers.ModelSerializer):
+    category = CategorySerializer(read_only=True)
+    genre = GenreSerializer(many=True, read_only=True)
 
     class Meta:
         model = Title
         fields = ('id', 'name', 'year', 'rating',
                   'description', 'genre', 'category')
-
-    def create(self, validated_data):
-        genres = validated_data.pop('genre')
-        category = validated_data.pop('category')
-        title = Title.objects.create(**validated_data)
-
-        for genre in genres:
-            current_genre, status = Genre.objects.get_or_create(
-                **genre)
-            GenresTitles.objects.create(
-                genre=current_genre, title=title)
-
-        Title.objects.create(title=title, **category)
-        return title
