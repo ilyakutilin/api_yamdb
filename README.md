@@ -21,7 +21,7 @@ API для сервиса **Yamdb**.
 Клонировать репозиторий и перейти в него в командной строке:
 
 ```
-git clone https://github.com/ilyakutilin/api_final_yatube.git
+git clone https://github.com/ilyakutilin/api_final_yamdb.git
 ```
 
 ```
