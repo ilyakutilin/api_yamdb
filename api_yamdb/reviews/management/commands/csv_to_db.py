@@ -21,7 +21,7 @@ path_file = {
 }
 
 
-def run_script():
+def init_user():
     users = {}
     with open(path_file['User']) as csvfile:
         reader = csv.DictReader(csvfile)
@@ -38,7 +38,10 @@ def run_script():
                 users[row['id']] = user
             except Exception:
                 continue
+    return users
 
+
+def init_category():
     with open(path_file['Category'], encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
@@ -50,6 +53,8 @@ def run_script():
             except Exception:
                 continue
 
+
+def init_title():
     with open(path_file['Title'], encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
@@ -63,6 +68,8 @@ def run_script():
             except Exception:
                 continue
 
+
+def init_genre():
     with open(path_file['Genre'], encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
@@ -74,6 +81,8 @@ def run_script():
             except Exception:
                 continue
 
+
+def init_genre_title():
     with open(path_file['GenreTitle'], encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
@@ -87,6 +96,8 @@ def run_script():
             except Exception:
                 continue
 
+
+def init_review(users):
     with open(path_file['Review'], encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
@@ -102,6 +113,8 @@ def run_script():
             except Exception:
                 continue
 
+
+def init_comment(users):
     with open(path_file['Comment'], encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
@@ -121,4 +134,10 @@ class Command(BaseCommand):
     help = 'Fills in the database for testing'
 
     def handle(self, *args, **options):
-        run_script()
+        users = init_user()
+        init_category()
+        init_title()
+        init_genre()
+        init_genre_title()
+        init_review(users)
+        init_comment(users)
