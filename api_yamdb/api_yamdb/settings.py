@@ -24,6 +24,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    # TODO: ILYA
+    # В этой пустой строчке нет необходимости. Если есть необходимость,
+    # то лучше добавлять комментарий вместо пустой строки, например,
+    # чтобы указать, зачем мы отделили этот блок кода.
     'rest_framework',
     'django_filters',
     'users.apps.UsersConfig',

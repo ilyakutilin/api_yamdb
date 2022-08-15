@@ -4,6 +4,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 
 def generate_and_send_confrimation_code(user, data):
+    # TODO: ILYA
+    # Отличный докстринг, только стоит многострочный текст стоит сносить
+    # на строчку ниже в начале и выше в конце.
     """Генерация кода подтверждения и его отправка.
 
     Используется при регистрации пользователя (signup).
@@ -14,6 +17,12 @@ def generate_and_send_confrimation_code(user, data):
     data - десериализованные провалидированные данные API запроса.
     """
     token = default_token_generator.make_token(user)
+    # TODO: ILYA
+    # Зеленый комментарий :)
+    # Еще в Python есть модуль uuid в котором можно найти различные варианты
+    # генерации uuid. В реальных проектах он используется достаточно часто.
+    # Можно посмотреть в сторону uuid.uuid4().
+    # https://docs-python.ru/standart-library/modul-uuid-python/funktsija-uuid4-modulja-uuid/
     send_mail(
         subject='Confirmation code',
         message=token,

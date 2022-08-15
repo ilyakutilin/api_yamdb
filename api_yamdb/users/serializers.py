@@ -12,8 +12,14 @@ class SignUpSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['email', 'username']
+        # TODO: ILYA
+        # Синхронизируйтесь и обсудите в команде, какой подход вы
+        # используете. Массивы, списки. Тогда в коде не будет
+        # неконсистентности.
 
     validators = [
+        # TODO: ILYA
+        # Валидаторы указывают внутри класса Meta.
         UniqueTogetherValidator(
             message='Пользователь с таким email уже существует',
             queryset=User.objects.all(),
@@ -72,6 +78,16 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class ProfileSerializer(serializers.ModelSerializer):
+    # TODO: ILYA
+    # Здесь верстка докстринга поехала. Если комментарий не умещается
+    # в одну строчку, то он смещается следующим образом.
+    # def test_func():
+    #     """
+    #     first line
+    #     second line
+    #
+    #     another line
+    #     """
     """Сериализатор для операций со своим профилем.
 
     Поле "роль" доступно только для чтения.

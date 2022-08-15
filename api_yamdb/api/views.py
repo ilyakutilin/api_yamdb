@@ -24,11 +24,17 @@ class ReviewViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         title_id = self.kwargs.get('title_id')
         title = Title.objects.filter(pk=title_id)
+        # TODO: ALEXEY
+        # Здесь будет уместнее использовать get_object_or_404().
+        # Нам не потребуется как-то явно обрабатывать ситуации, когда данные,
+        # которые запрошены, не окажутся в БД.
         if not title.exists():
             raise NotFound(
                 detail=f'Произведения с номером {title_id} не существует'
             )
         review = Review.objects.filter(
+            # TODO: ALEXEY
+            # Логику валидации необходимо реализовывать в сериализаторе.
             title=title[0], author=self.request.user
         )
         if review.exists():
@@ -36,6 +42,9 @@ class ReviewViewSet(viewsets.ModelViewSet):
                 detail='Отзыв на произведение уже существует',
             )
         serializer.save(author=self.request.user, title=title[0])
+        # TODO: ALEXEY
+        # После того, как мы перейдем на использование get_object_or_404(),
+        # то нам не придется лишний раз указывать индексы для работы с объектом
 
 
 class CommentViewSet(viewsets.ModelViewSet):
@@ -48,8 +57,14 @@ class CommentViewSet(viewsets.ModelViewSet):
         return new_queryset
 
     def perform_create(self, serializer):
+        # TODO: ALEXEY
+        # Валидация по всех view-функциях должна переехать в сериализатор.
+        # Как правило ее располагают именно там и у сериализатора есть
+        # специальные методы для валидирования полей.
         title_id = self.kwargs.get('title_id')
         title = Title.objects.filter(pk=title_id)
+        # TODO: ALEXEY
+        # См. замечания про get_object_or_404().
         if not title.exists():
             raise NotFound(
                 detail=f'Произведения с номером {title_id} не существует'
@@ -62,21 +77,42 @@ class CommentViewSet(viewsets.ModelViewSet):
                         f'к произведению {title[0].name} не существует')
             )
         serializer.save(author=self.request.user, review=review[0])
+        # TODO: ALEXEY
+        # См. замечания про индексы.
 
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
+    # TODO: ARTEM
+    # Стоит добавить возможность подсчета оценки для отзыва. можно сделать
+    # проще. После вызова функции all() вызвать метод annotate() совместно с
+    # Avg. Таким образом мы сможем подсчитать рейтинг.
+    # https://django.fun/docs/django/ru/4.0/ref/models/querysets/#annotate
     permission_classes = [IsAdminOrReadOnly]
     filter_backends = (DjangoFilterBackend,)
+    # TODO: ARTEM
+    # Не стоит смешивать массивы и списки. Рекомендую определиться с подходом,
+    # какой будет использоваться в проекте и придерживаться его.
+    # Для неизменяемых последовательностей предпочтительнее будет использовать
+    # массив.
     filterset_class = TitleFilter
 
     def get_serializer_class(self):
         if self.request.method in ['POST', 'PATCH']:
+            # TODO: ARTEM
+            # В парадигме view-сетов корректнее проверять на self.action.
+            # В данном случае это будет: list и retrieve.
             return SaveTitleSerializer
         return TitleSerializer
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
+    # TODO: ARTEM
+    # Здесь стоит придерживаться общего подхода работы с view-сетами и
+    # реализовать данный класс, как и ему подобные. В данном случае нам
+    # не требуется реализовывать @action. А чтобы была возможность указать
+    # slug в урл, то стоит посмотреть в сторону поля lookup_field.
+    # https://django.fun/docs/django-rest-framework/ru/3.12/api-guide/generic-views/#attributes
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = [IsAdminOrReadOnly]
@@ -85,6 +121,8 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['delete'], url_path=r'(?P<slug>[-\w]+)')
     def delete_by_slug(self, request, slug):
+        # TODO: ARTEM
+        # Все эту работу возьмет на себя джанго.
         category = Category.objects.filter(slug=slug)
         if not category.exists():
             raise NotFound(
@@ -102,6 +140,8 @@ class GenreViewSet(viewsets.ModelViewSet):
     search_fields = ('name',)
 
     @action(detail=False, methods=['delete'], url_path=r'(?P<slug>[-\w]+)')
+    # TODO: ARTEM
+    # См. замечания про lookup_field.
     def delete_by_slug(self, request, slug):
         genre = Genre.objects.filter(slug=slug)
         if not genre.exists():

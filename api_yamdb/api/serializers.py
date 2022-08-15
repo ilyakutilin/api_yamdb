@@ -31,6 +31,9 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ('name', 'slug')
+        # TODO: ARTEM
+        # Нам нужно исключить только поле id, поэтому это можно сделать
+        # и с помощью exclude.
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -41,6 +44,8 @@ class GenreSerializer(serializers.ModelSerializer):
 
 
 class SaveTitleSerializer(serializers.ModelSerializer):
+    # TODO: ARTEM
+    # Имя сериализатора всегда лучше начинать с имени модели.
     category = SlugRelatedField(
         slug_field='slug',
         queryset=Category.objects.all(),
@@ -57,6 +62,10 @@ class SaveTitleSerializer(serializers.ModelSerializer):
                   'description', 'genre', 'category')
 
     def create(self, validated_data):
+        # TODO: ARTEM
+        # В этом нет необходимости. Мы уже указали, поле genre с атрибутом
+        # many=True . Django понимает, что здесь может быть список объектов,
+        # а не один.
         genres = validated_data.pop('genre')
         title = Title.objects.create(**validated_data)
         for genre in genres:
@@ -71,6 +80,10 @@ class SaveTitleSerializer(serializers.ModelSerializer):
 class TitleSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(many=True, read_only=True)
+    # TODO: ARTEM
+    # Здесь стоит добавить поле rating, которое мы на лету посчитаем
+    # при запросе к нашему view-сету. В таком случае в модели данное поле
+    # не потребуется.
 
     class Meta:
         model = Title
