@@ -1,3 +1,5 @@
+from datetime import datetime
+from django.core.validators import MaxValueValidator
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import Avg
@@ -9,9 +11,7 @@ User = get_user_model()
 
 class Genre(models.Model):
     name = models.CharField(
-        # TODO: ARTEM
-        # Будет уместно также добавить и verbose_name для всех моделей.
-        verbose_name='Жанр',
+        verbose_name='Наименование жанра',
         max_length=128
     )
     slug = models.SlugField(
@@ -21,11 +21,12 @@ class Genre(models.Model):
 
     class Meta:
         ordering = ['id']
+        verbose_name = 'Жанр'
 
 
 class Category(models.Model):
     name = models.CharField(
-        verbose_name='Категория',
+        verbose_name='Наименование категория',
         max_length=128
     )
     slug = models.SlugField(
@@ -35,6 +36,7 @@ class Category(models.Model):
 
     class Meta:
         ordering = ['id']
+        verbose_name = 'Категория'
 
 
 class Title(models.Model):
@@ -42,14 +44,11 @@ class Title(models.Model):
         verbose_name='Наименование',
         max_length=256
     )
-    year = models.IntegerField(verbose_name='Год производства')
-    # TODO: ARTEM
-    # Стоит добавить валидацию. А может ли год быть больше текущего?
-    # Также здесь будет уместнее использовать PositiveSmallIntegerField
-    # для небольших чисел.
-    # https://django.fun/docs/django/ru/4.0/ref/models/fields/#positivesmallintegerfield
+    year = models.IntegerField(
+        verbose_name='Год производства',
+        validators=[MaxValueValidator(datetime.now().year)],)
     rating = models.FloatField(verbose_name='Рейтинг', null=True)
-    # TODO: ARTEM
+    # TODO: ARTEM->ALEXEY
     # Нам необходимо рассчитывать рейтинг на момент запроса и самое удачное
     # место для этого view с использованием annotate(). В таком подходе нам
     # не потребуется хранить в БД текущий рейтинг.
@@ -66,16 +65,16 @@ class Title(models.Model):
     )
 
     genre = models.ManyToManyField(
-        # TODO: ARTEM
-        # Здесь уместно будет добавить атрибут through_fields.
-        # В которым мы укажем поля сквозной модели, т.е title и genre.
-        # https://www.django-rest-framework.org/api-guide/relations/#manytomanyfields-with-a-through-model
         Genre,
-        through='GenresTitles'
+        through='GenresTitles',
+        through_fields=('title', 'genre'),
+        null=True,
+        verbose_name='Жанр',
+
     )
 
     def update_rating(self):
-        # TODO: ARTEM
+        # TODO: ARTEM->ALEXEY
         # См. замечание из view-функции.
         reviews = Review.objects.filter(title=self.pk)
         rating = reviews.aggregate(Avg('score'))
@@ -84,6 +83,7 @@ class Title(models.Model):
 
     class Meta:
         ordering = ['-year']
+        verbose_name = 'Произведение'
 
 
 class GenresTitles(models.Model):
@@ -99,6 +99,9 @@ class GenresTitles(models.Model):
         related_name='titles',
         verbose_name='Жанр'
     )
+
+    class Meta:
+        verbose_name = 'Жанры произведений'
 
 
 class Review(models.Model):
@@ -173,6 +176,7 @@ class Review(models.Model):
             )
         ]
         ordering = ['pub_date']
+        verbose_name = 'Обзор'
 
 
 class Comment(models.Model):
@@ -199,6 +203,7 @@ class Comment(models.Model):
 
     class Meta:
         ordering = ['pub_date']
+        verbose_name = 'Комментарий'
 
 
 @receiver(post_save, sender=Review)
