@@ -1,7 +1,9 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 from reviews.models import (Category, Comment, Genre, GenresTitles, Review,
                             Title)
+from rest_framework.validators import UniqueTogetherValidator
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -13,6 +15,12 @@ class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = ('id', 'text', 'author', 'score', 'pub_date')
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Review.objects.all(),
+                fields=['title', 'author']
+            )
+        ]
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -24,6 +32,12 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = ('id', 'text', 'author', 'pub_date')
+
+    def validate(self, data):
+        title_id = self.context['request'].parser_context['kwargs'].get(
+            'title_id')
+        get_object_or_404(Title, pk=title_id)
+        return data
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -80,6 +94,7 @@ class SaveTitleSerializer(serializers.ModelSerializer):
 class TitleSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(many=True, read_only=True)
+    rating = serializers.FloatField()
     # TODO: ARTEM
     # Здесь стоит добавить поле rating, которое мы на лету посчитаем
     # при запросе к нашему view-сету. В таком случае в модели данное поле
