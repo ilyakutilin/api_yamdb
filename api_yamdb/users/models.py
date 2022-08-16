@@ -1,22 +1,19 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 
 
 class User(AbstractUser):
-    # TODO: ILYA
-    # Чтобы было удобно работать с ролями пользователя, необходимо реализовать
-    # в модели User свойства, который будут выполнять данные проверки.
-    # Например:
-    # @property
-    # def is_<роль_пользователя>(self):
-    #     return self.role == User.<роль_пользователя>
-    # Далее в любом месте работая с объектом модели User можно будет выполнить
-    # проверку вызовом данного свойства.
     """Кастомная модель пользователя."""
+    USER = 'user'
+    MODERATOR = 'moderator'
+    ADMIN = 'admin'
+
     ROLE_CHOICES = [
-        ('user', 'user'),
-        ('moderator', 'moderator'),
-        ('admin', 'admin'),
+        (USER, 'user'),
+        (MODERATOR, 'moderator'),
+        (ADMIN, 'admin'),
     ]
     email = models.EmailField(unique=True)
     bio = models.TextField(
@@ -25,12 +22,9 @@ class User(AbstractUser):
     )
     role = models.CharField(
         'Роль',
-        max_length=9,
-        # TODO: ILYA
-        # А если добавится роль длиннее слова moderator?
-        # Давай сделаем здесь небольшой запас в длине.
+        max_length=20,
         choices=ROLE_CHOICES,
-        default='user'
+        default=USER
     )
 
     class Meta:
@@ -41,3 +35,36 @@ class User(AbstractUser):
             ),
         ]
         ordering = ['id']
+
+    # def save(self, *args, **kwargs):
+    #     if self.role == self.ADMIN:
+    #         self.is_staff = True
+    #         super(User, self).save(*args, **kwargs)
+
+    @property
+    def is_user(self):
+        return self.role == User.USER
+
+    @property
+    def is_moderator(self):
+        return self.role == User.MODERATOR
+
+    @property
+    def is_admin(self):
+        return self.role == User.ADMIN
+
+
+@receiver(pre_save, sender=User)
+def auto_is_staff(sender, instance, *args, **kwargs):
+    """Авто присвоение флага is_staff пользователям с ролью 'admin'."""
+    if instance.role == User.ADMIN:
+        instance.is_staff = True
+    elif instance.role == User.USER or User.MODERATOR:
+        instance.is_staff = False
+
+
+@receiver(pre_save, sender=User)
+def auto_admin_for_superuser(sender, instance, *args, **kwargs):
+    """Авто присвоение роли 'admin' суперюзерам."""
+    if instance.is_superuser:
+        instance.role = User.ADMIN

@@ -11,21 +11,15 @@ class SignUpSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['email', 'username']
-        # TODO: ILYA
-        # Синхронизируйтесь и обсудите в команде, какой подход вы
-        # используете. Массивы, списки. Тогда в коде не будет
-        # неконсистентности.
+        fields = ('email', 'username')
 
-    validators = [
-        # TODO: ILYA
-        # Валидаторы указывают внутри класса Meta.
-        UniqueTogetherValidator(
-            message='Пользователь с таким email уже существует',
-            queryset=User.objects.all(),
-            fields=['email', 'username']
-        )
-    ]
+        validators = [
+            UniqueTogetherValidator(
+                message='Пользователь с таким email уже существует',
+                queryset=User.objects.all(),
+                fields=('email', 'username')
+            )
+        ]
 
     def validate_username(self, value):
         """Валидация имени пользователя."""
@@ -72,29 +66,19 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'first_name', 'last_name', 'bio',
-                  'role']
+        fields = ('username', 'email', 'first_name', 'last_name', 'bio',
+                  'role')
         lookup_field = 'username'
 
 
 class ProfileSerializer(serializers.ModelSerializer):
-    # TODO: ILYA
-    # Здесь верстка докстринга поехала. Если комментарий не умещается
-    # в одну строчку, то он смещается следующим образом.
-    # def test_func():
-    #     """
-    #     first line
-    #     second line
-    #
-    #     another line
-    #     """
-    """Сериализатор для операций со своим профилем.
-
+    """
+    Сериализатор для операций со своим профилем.
     Поле "роль" доступно только для чтения.
     """
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'first_name', 'last_name', 'bio',
-                  'role']
-        read_only_fields = ['role']
+        fields = ('username', 'email', 'first_name', 'last_name', 'bio',
+                  'role')
+        read_only_fields = ('role',)

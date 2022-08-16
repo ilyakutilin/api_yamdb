@@ -57,14 +57,14 @@ class UserViewSet(viewsets.ModelViewSet):
     """
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [IsAdmin]
+    permission_classes = (IsAdmin,)
     lookup_field = 'username'
 
     @action(
-        methods=['get', 'patch'],
+        methods=('get', 'patch'),
         detail=False,
         url_path='me',
-        permission_classes=[IsAuthenticated]
+        permission_classes=(IsAuthenticated,)
     )
     def me(self, request, *args, **kwargs):
         """Доступ пользователя к своему профилю.
