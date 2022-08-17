@@ -1,16 +1,15 @@
-from django.contrib.auth import get_user_model
-from django.db import models
-from django.core.validators import MinValueValidator, MaxValueValidator
+from datetime import datetime
 
+from django.contrib.auth import get_user_model
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
 
 User = get_user_model()
 
 
 class Genre(models.Model):
     name = models.CharField(
-        # TODO: ARTEM
-        # Будет уместно также добавить и verbose_name для всех моделей.
-        verbose_name='Жанр',
+        verbose_name='Наименование жанра',
         max_length=128
     )
     slug = models.SlugField(
@@ -20,11 +19,12 @@ class Genre(models.Model):
 
     class Meta:
         ordering = ['id']
+        verbose_name = 'Жанр'
 
 
 class Category(models.Model):
     name = models.CharField(
-        verbose_name='Категория',
+        verbose_name='Наименование категория',
         max_length=128
     )
     slug = models.SlugField(
@@ -34,6 +34,7 @@ class Category(models.Model):
 
     class Meta:
         ordering = ['id']
+        verbose_name = 'Категория'
 
 
 class Title(models.Model):
@@ -41,12 +42,9 @@ class Title(models.Model):
         verbose_name='Наименование',
         max_length=256
     )
-    year = models.IntegerField(verbose_name='Год производства')
-    # TODO: ARTEM
-    # Стоит добавить валидацию. А может ли год быть больше текущего?
-    # Также здесь будет уместнее использовать PositiveSmallIntegerField
-    # для небольших чисел.
-    # https://django.fun/docs/django/ru/4.0/ref/models/fields/#positivesmallintegerfield
+    year = models.PositiveSmallIntegerField(
+        verbose_name='Год производства',
+        validators=[MaxValueValidator(datetime.now().year)],)
     description = models.CharField(
         verbose_name='Описание',
         max_length=2048
@@ -60,16 +58,17 @@ class Title(models.Model):
     )
 
     genre = models.ManyToManyField(
-        # TODO: ARTEM
-        # Здесь уместно будет добавить атрибут through_fields.
-        # В которым мы укажем поля сквозной модели, т.е title и genre.
-        # https://www.django-rest-framework.org/api-guide/relations/#manytomanyfields-with-a-through-model
         Genre,
-        through='GenresTitles'
+        through='GenresTitles',
+        through_fields=('title', 'genre'),
+        null=True,
+        verbose_name='Жанр',
+
     )
 
     class Meta:
         ordering = ['-year']
+        verbose_name = 'Произведение'
 
 
 class GenresTitles(models.Model):
@@ -85,6 +84,9 @@ class GenresTitles(models.Model):
         related_name='titles',
         verbose_name='Жанр'
     )
+
+    class Meta:
+        verbose_name = 'Жанры произведений'
 
 
 class Review(models.Model):
@@ -124,6 +126,7 @@ class Review(models.Model):
             )
         ]
         ordering = ['pub_date']
+        verbose_name = 'Обзор'
 
     def __str__(self):
         return f'Отзыв {self.author} на {self.title.name}'

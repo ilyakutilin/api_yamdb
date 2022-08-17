@@ -1,9 +1,8 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
-from reviews.models import (Category, Comment, Genre, GenresTitles, Review,
-                            Title)
 from rest_framework.validators import UniqueTogetherValidator
+from reviews.models import Category, Comment, Genre, Review, Title
 
 
 class CurrentTitleDefault:
@@ -53,22 +52,17 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ('name', 'slug')
-        # TODO: ARTEM
-        # Нам нужно исключить только поле id, поэтому это можно сделать
-        # и с помощью exclude.
+        exclude = ('id',)
 
 
 class GenreSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Genre
-        fields = ('name', 'slug')
+        exclude = ('id',)
 
 
-class SaveTitleSerializer(serializers.ModelSerializer):
-    # TODO: ARTEM
-    # Имя сериализатора всегда лучше начинать с имени модели.
+class TitleSaveSerializer(serializers.ModelSerializer):
     category = SlugRelatedField(
         slug_field='slug',
         queryset=Category.objects.all(),
@@ -84,30 +78,11 @@ class SaveTitleSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'year',
                   'description', 'genre', 'category')
 
-    def create(self, validated_data):
-        # TODO: ARTEM
-        # В этом нет необходимости. Мы уже указали, поле genre с атрибутом
-        # many=True . Django понимает, что здесь может быть список объектов,
-        # а не один.
-        genres = validated_data.pop('genre')
-        title = Title.objects.create(**validated_data)
-        for genre in genres:
-            GenresTitles.objects.create(
-                genre=genre, title=title)
-        return title
-
-    def to_representation(self, instance):
-        return TitleSerializer().to_representation(instance)
-
 
 class TitleSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(many=True, read_only=True)
     rating = serializers.FloatField(read_only=True)
-    # TODO: ARTEM
-    # Здесь стоит добавить поле rating, которое мы на лету посчитаем
-    # при запросе к нашему view-сету. В таком случае в модели данное поле
-    # не потребуется.
 
     class Meta:
         model = Title
