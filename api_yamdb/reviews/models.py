@@ -1,8 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import models
-from django.db.models import Avg
-from django.db.models.signals import post_save
-from django.dispatch import receiver
+from django.core.validators import MinValueValidator, MaxValueValidator
+
 
 User = get_user_model()
 
@@ -48,11 +47,6 @@ class Title(models.Model):
     # Также здесь будет уместнее использовать PositiveSmallIntegerField
     # для небольших чисел.
     # https://django.fun/docs/django/ru/4.0/ref/models/fields/#positivesmallintegerfield
-    rating = models.FloatField(verbose_name='Рейтинг', null=True)
-    # TODO: ARTEM
-    # Нам необходимо рассчитывать рейтинг на момент запроса и самое удачное
-    # место для этого view с использованием annotate(). В таком подходе нам
-    # не потребуется хранить в БД текущий рейтинг.
     description = models.CharField(
         verbose_name='Описание',
         max_length=2048
@@ -74,14 +68,6 @@ class Title(models.Model):
         through='GenresTitles'
     )
 
-    def update_rating(self):
-        # TODO: ARTEM
-        # См. замечание из view-функции.
-        reviews = Review.objects.filter(title=self.pk)
-        rating = reviews.aggregate(Avg('score'))
-        self.rating = round(rating['score__avg'], 2)
-        self.save()
-
     class Meta:
         ordering = ['-year']
 
@@ -102,31 +88,6 @@ class GenresTitles(models.Model):
 
 
 class Review(models.Model):
-    GRADE = [
-        # TODO: ALEXEY
-        # Правильный ход мысли, но в Django для этого есть более правильный
-        # инструмент. Здесь стоит воспользоваться валидаторами на уровне модели
-        # Для этого необходимо в поле модели указать атрибут validators
-        # и добавить следующее валидаторы:
-        # MinValueValidator
-        # https://django.fun/docs/django/ru/4.0/ref/validators/#minvaluevalidator
-        # MaXValueValidator
-        # https://django.fun/docs/django/ru/4.0/ref/validators/#maxvaluevalidator
-        # В самих валидаторах первым аргументом указать значение минимальное
-        # или максимальное соответственно. Также вторым аргументом валидатор
-        # принимает текст, который будет отображен, если значение будет
-        # выходить за границы.
-        (1, 1),
-        (2, 2),
-        (3, 3),
-        (4, 4),
-        (5, 5),
-        (6, 6),
-        (7, 7),
-        (8, 8),
-        (9, 9),
-        (10, 10),
-    ]
     title = models.ForeignKey(
         Title,
         on_delete=models.CASCADE,
@@ -143,36 +104,29 @@ class Review(models.Model):
         related_name='reviews',
         verbose_name='Автор'
     )
-    score = models.IntegerField(
-        # TODO: ALEXEY
-        # См. замечание про PositiveSmallIntegerField. Стоит проверить и
-        # в остальных полях, если им не нужно хранить числа больших размеров,
-        # то стоит придерживаться такого подхода.
+    score = models.PositiveSmallIntegerField(
         verbose_name='Оценка',
-        choices=GRADE,
+        validators=[
+            MinValueValidator(1, 'Оценка не может быть меньше единицы (1)'),
+            MaxValueValidator(10, 'Оценка не может быть больше десяти (10)')
+        ]
     )
     pub_date = models.DateTimeField(
         verbose_name='Дата публикации',
         auto_now_add=True
     )
 
-    def __str__(self):
-        # TODO: ALEXEY
-        # Нарушен порядок внутренних классов и стандартных методов.
-        # https://docs.djangoproject.com/en/dev/internals/contributing/writing-code/coding-style/#model-style
-        return f'Отзыв {self.author} на {self.title.name}'
-
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                # TODO: ALEXEY
-                # Зеленый комментарий :)
-                # Отлично! Добавили constraints.
                 name='review_author_title_is_unique',
                 fields=['author', 'title']
             )
         ]
         ordering = ['pub_date']
+
+    def __str__(self):
+        return f'Отзыв {self.author} на {self.title.name}'
 
 
 class Comment(models.Model):
@@ -199,14 +153,3 @@ class Comment(models.Model):
 
     class Meta:
         ordering = ['pub_date']
-
-
-@receiver(post_save, sender=Review)
-def update_rating(sender, instance, created, **kwargs):
-    # TODO: ALEXEY
-    # # Зеленый комментарий :)
-    # За реализацию такого подхода однозначно можно похвалить.
-    instance.title.update_rating()
-    # TODO: ALEXEY
-    # Но в данном методе не будет необходимости, в комментарии модели и
-    # view-функции указал более подробно почему.

@@ -1,7 +1,9 @@
 from django_filters.rest_framework import DjangoFilterBackend
+from django.shortcuts import get_object_or_404
+from django.db.models import Avg
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from reviews.models import Category, Comment, Genre, Review, Title
 
@@ -14,7 +16,7 @@ from .serializers import (CategorySerializer, CommentSerializer,
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = [IsOwnerOrAdminOrReadOnly]
+    permission_classes = (IsOwnerOrAdminOrReadOnly, )
 
     def get_queryset(self):
         title_id = self.kwargs.get('title_id')
@@ -23,33 +25,13 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         title_id = self.kwargs.get('title_id')
-        title = Title.objects.filter(pk=title_id)
-        # TODO: ALEXEY
-        # Здесь будет уместнее использовать get_object_or_404().
-        # Нам не потребуется как-то явно обрабатывать ситуации, когда данные,
-        # которые запрошены, не окажутся в БД.
-        if not title.exists():
-            raise NotFound(
-                detail=f'Произведения с номером {title_id} не существует'
-            )
-        review = Review.objects.filter(
-            # TODO: ALEXEY
-            # Логику валидации необходимо реализовывать в сериализаторе.
-            title=title[0], author=self.request.user
-        )
-        if review.exists():
-            raise ValidationError(
-                detail='Отзыв на произведение уже существует',
-            )
-        serializer.save(author=self.request.user, title=title[0])
-        # TODO: ALEXEY
-        # После того, как мы перейдем на использование get_object_or_404(),
-        # то нам не придется лишний раз указывать индексы для работы с объектом
+        title = get_object_or_404(Title, pk=title_id)
+        serializer.save(author=self.request.user, title=title)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    permission_classes = [IsOwnerOrAdminOrReadOnly]
+    permission_classes = (IsOwnerOrAdminOrReadOnly, )
 
     def get_queryset(self):
         review_id = self.kwargs.get('review_id')
@@ -57,32 +39,13 @@ class CommentViewSet(viewsets.ModelViewSet):
         return new_queryset
 
     def perform_create(self, serializer):
-        # TODO: ALEXEY
-        # Валидация по всех view-функциях должна переехать в сериализатор.
-        # Как правило ее располагают именно там и у сериализатора есть
-        # специальные методы для валидирования полей.
-        title_id = self.kwargs.get('title_id')
-        title = Title.objects.filter(pk=title_id)
-        # TODO: ALEXEY
-        # См. замечания про get_object_or_404().
-        if not title.exists():
-            raise NotFound(
-                detail=f'Произведения с номером {title_id} не существует'
-            )
         review_id = self.kwargs.get('review_id')
-        review = Review.objects.filter(pk=review_id)
-        if not review.exists():
-            raise NotFound(
-                detail=(f'Отзыва с номером {review_id}'
-                        f'к произведению {title[0].name} не существует')
-            )
-        serializer.save(author=self.request.user, review=review[0])
-        # TODO: ALEXEY
-        # См. замечания про индексы.
+        review = get_object_or_404(Review, pk=review_id)
+        serializer.save(author=self.request.user, review=review)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all()
+    queryset = Title.objects.all().annotate(rating=Avg('reviews__score'))
     # TODO: ARTEM
     # Стоит добавить возможность подсчета оценки для отзыва. можно сделать
     # проще. После вызова функции all() вызвать метод annotate() совместно с
