@@ -31,15 +31,10 @@ class User(AbstractUser):
         constraints = [
             models.UniqueConstraint(
                 name='users_user_unique_relationships',
-                fields=['email', 'username'],
+                fields=('email', 'username'),
             ),
         ]
         ordering = ['id']
-
-    # def save(self, *args, **kwargs):
-    #     if self.role == self.ADMIN:
-    #         self.is_staff = True
-    #         super(User, self).save(*args, **kwargs)
 
     @property
     def is_user(self):
