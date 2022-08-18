@@ -4,11 +4,8 @@ from rest_framework import permissions
 class IsOwnerOrAdminOrReadOnly(permissions.BasePermission):
 
     def has_permission(self, request, view):
-        if request.method in permissions.SAFE_METHODS:
-            return True
-        return (request.user.is_authenticated)
-        # TODO: ILYA
-        # Условие можно объединить с условием выше.
+        return (request.method in permissions.SAFE_METHODS
+                or request.user.is_authenticated)
 
     def has_object_permission(self, request, view, obj):
         if request.method in permissions.SAFE_METHODS:
@@ -31,9 +28,7 @@ class IsAdminOrReadOnly(permissions.BasePermission):
         )
 
     def has_object_permission(self, request, view, obj):
-        if request.method in permissions.SAFE_METHODS:
-            return True
-        return request.user.is_admin or request.user.is_staff
-        # TODO: ILYA
-        # Здесь тоже можно объединить два условия и это никак не скажется
-        # на читаемости кода.
+        return (
+            request.method in permissions.SAFE_METHODS
+            or (request.user.is_admin or request.user.is_staff)
+        )

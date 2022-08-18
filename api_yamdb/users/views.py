@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 
 from .models import User
 from .permissions import IsAdmin
-from .serializers import (ObtainJWTTokenSerializer, ProfileSerializer,
+from .serializers import (ObtainJWTTokenSerializer,
                           SignUpSerializer, UserSerializer)
 from .utils import generate_and_send_confrimation_code
 
@@ -29,9 +29,8 @@ class SignUpAPIView(APIView):
             )
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(
-            serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            # TODO: ILYA
-            # Скобка прилипла. Стоит на строчку ниже ее перенести.
+            serializer.errors, status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 class ObtainJWTTokenAPIView(APIView):
@@ -79,12 +78,10 @@ class UserViewSet(viewsets.ModelViewSet):
         """
         self.object = User.objects.get(username=self.request.user.username)
         if request.method == 'PATCH':
-            serializer = ProfileSerializer(
-                # TODO: ILYA
-                # Сериализатор доступен через self.get_serializer.
+            serializer = self.get_serializer(
                 self.object,
                 data=self.request.data,
-                context={'request_user': self.request.user},
+                context={'request': self.request},
                 partial=True
             )
             if serializer.is_valid():
@@ -93,5 +90,5 @@ class UserViewSet(viewsets.ModelViewSet):
                                 status=status.HTTP_200_OK)
             return Response(serializer.errors,
                             status=status.HTTP_400_BAD_REQUEST)
-        serializer = ProfileSerializer(self.object)
+        serializer = self.get_serializer(self.object)
         return Response(serializer.data)

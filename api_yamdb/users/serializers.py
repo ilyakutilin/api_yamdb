@@ -68,21 +68,20 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ('username', 'email', 'first_name', 'last_name', 'bio',
                   'role')
-        lookup_field = 'username'
-        # TODO: ILYA
-        # Это будет уместнее вынести во view.
 
+    def validate_role(self, value):
+        """
+        Валидация роли.
 
-class ProfileSerializer(serializers.ModelSerializer):
-    # TODO: ILYA
-    # Лишний сериализатор. Точно такой же, как и UserSerializer.
-    """
-    Сериализатор для операций со своим профилем.
-    Поле "роль" доступно только для чтения.
-    """
-
-    class Meta:
-        model = User
-        fields = ('username', 'email', 'first_name', 'last_name', 'bio',
-                  'role')
-        read_only_fields = ('role',)
+        Защита от изменения своей роли пользователем:
+        При попытке изменить свою роль без админского статуса
+        возвращается текущая роль пользователя без изменений.
+        """
+        request_user = self.context.get('request').user
+        if (
+            value
+            and request_user
+            and not (request_user.is_admin or request_user.is_staff)
+        ):
+            return request_user.role
+        return value
