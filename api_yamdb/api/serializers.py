@@ -1,17 +1,7 @@
-from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
-from rest_framework.validators import UniqueTogetherValidator
+from rest_framework.exceptions import NotFound, ValidationError
 from reviews.models import Category, Comment, Genre, Review, Title
-
-
-class CurrentTitleDefault:
-    # TODO: ALEXEY
-    # Целый класс для одноразового использования? Не слишком практично.
-    requires_context = True
-
-    def __call__(self, serializer_field):
-        return serializer_field.context.get('view').kwargs.get('title_id')
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -20,27 +10,27 @@ class ReviewSerializer(serializers.ModelSerializer):
         slug_field='username',
         default=serializers.CurrentUserDefault()
     )
-    title = serializers.HiddenField(default=CurrentTitleDefault())
-    # TODO: ALEXEY
-    # Данное поле можно убрать из сериализатора.
 
     class Meta:
         model = Review
-        fields = ('id', 'text', 'author', 'score', 'pub_date', 'title')
-        validators = [
-            # TODO: ALEXEY
-            # Сейчас:
-            # 1. Создаем дополнительный класс.
-            # 2. Дополнительное поле в сериализаторе.
-            # 3. Вызов валидатора UniqueTogetherValidator.
-            # Но здесь достаточно вызывать validate или validate_<field_name>
-            # и проверить, наличие объекта в базе с помощью exists()
-            # и бросить ошибку. См. замечание из CommentSerializer
-            UniqueTogetherValidator(
-                queryset=Review.objects.all(),
-                fields=('title', 'author')
+        fields = ('id', 'text', 'author', 'score', 'pub_date')
+
+    def validate(self, data):
+        if self.context['request'].method != 'POST':
+            return data
+        title_id = self.context['request'].parser_context['kwargs'].get(
+            'title_id')
+        author = self.context['request'].user
+        review = Review.objects.filter(
+            title__id=title_id,
+            author=author
+        )
+        if review.exists():
+            raise ValidationError(
+                detail=(f'Отзыв {author} на произведения с '
+                        f'id={title_id} уже существует')
             )
-        ]
+        return data
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -56,13 +46,11 @@ class CommentSerializer(serializers.ModelSerializer):
     def validate(self, data):
         title_id = self.context['request'].parser_context['kwargs'].get(
             'title_id')
-        get_object_or_404(Title, pk=title_id)
-        # TODO: ALEXEY
-        # get_object_or_404 уместнее использовать во view-функции.
-        # Здесь стоит явно проверить, например, с помощью вызова exists()
-        # наличие объекта в базе и тогда уже бросать ошибку
-        # serializers.ValidationError.
-        # https://www.django-rest-framework.org/api-guide/exceptions/#validationerror
+        title = Title.objects.filter(pk=title_id)
+        if not title.exists():
+            raise NotFound(
+                detail=f'Произведения с id={title_id} не существует'
+            )
         return data
 
 
