@@ -76,28 +76,22 @@ class TitleViewSet(viewsets.ModelViewSet):
         return TitleSaveSerializer
 
 
-class CategoryViewSet(mixins.ListModelMixin,
-                      mixins.CreateModelMixin,
-                      mixins.DestroyModelMixin,
-                      viewsets.GenericViewSet):
-    # TODO: ARTEM
-    # Сейчас у нас два класса, в которых мы вынуждены дублировать наследников.
-    # Давай заведем абстрактный класс и будем наследоваться от него.
+class ListCreateDestroyViewSet(mixins.ListModelMixin,
+                               mixins.CreateModelMixin,
+                               mixins.DestroyModelMixin,
+                               viewsets.GenericViewSet):
+    permission_classes = (IsAdminOrReadOnly,)
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    search_fields = ('name',)
+    lookup_field = 'slug'
+
+
+class CategoryViewSet(ListCreateDestroyViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = (IsAdminOrReadOnly,)
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    search_fields = ('name',)
-    lookup_field = 'slug'
 
 
-class GenreViewSet(mixins.ListModelMixin,
-                   mixins.CreateModelMixin,
-                   mixins.DestroyModelMixin,
-                   viewsets.GenericViewSet):
+class GenreViewSet(ListCreateDestroyViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = (IsAdminOrReadOnly,)
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    search_fields = ('name',)
-    lookup_field = 'slug'
+

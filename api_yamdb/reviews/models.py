@@ -1,8 +1,7 @@
-from datetime import datetime
-
 from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from .validators import year_validator
 
 User = get_user_model()
 
@@ -44,12 +43,8 @@ class Title(models.Model):
     )
     year = models.PositiveSmallIntegerField(
         verbose_name='Год производства',
-        validators=[MaxValueValidator(datetime.now().year)],)
-    # TODO: ARTEM
-    # Год вычисляется при запуске сервера - он станет некорректным
-    # через год. Стоит посмотреть в сторону своего валидатора. Его стоит
-    # расположить в отдельном файле validators.py.
-    # https://stackoverflow.com/questions/41422565/django-year-validation-returns-ensure-this-value-is-less-than-or-equal-to-2016
+        validators=(year_validator,)
+    )
     description = models.CharField(
         verbose_name='Описание',
         max_length=2048
