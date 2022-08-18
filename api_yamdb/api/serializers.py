@@ -20,13 +20,14 @@ class ReviewSerializer(serializers.ModelSerializer):
             return data
         title_id = self.context['request'].parser_context['kwargs'].get(
             'title_id')
+        author = self.context['request'].user
         review = Review.objects.filter(
             title__id=title_id,
-            author=self.context['request'].user
+            author=author
         )
         if review.exists():
             raise ValidationError(
-                detail=('Отзыв на произведения с '
+                detail=(f'Отзыв {author} на произведения с '
                         f'id={title_id} уже существует')
             )
         return data
