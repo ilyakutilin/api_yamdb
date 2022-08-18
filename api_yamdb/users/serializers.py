@@ -69,9 +69,13 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('username', 'email', 'first_name', 'last_name', 'bio',
                   'role')
         lookup_field = 'username'
+        # TODO: ILYA
+        # Это будет уместнее вынести во view.
 
 
 class ProfileSerializer(serializers.ModelSerializer):
+    # TODO: ILYA
+    # Лишний сериализатор. Точно такой же, как и UserSerializer.
     """
     Сериализатор для операций со своим профилем.
     Поле "роль" доступно только для чтения.

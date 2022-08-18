@@ -7,6 +7,8 @@ class IsOwnerOrAdminOrReadOnly(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
         return (request.user.is_authenticated)
+        # TODO: ILYA
+        # Условие можно объединить с условием выше.
 
     def has_object_permission(self, request, view, obj):
         if request.method in permissions.SAFE_METHODS:
@@ -32,3 +34,6 @@ class IsAdminOrReadOnly(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
         return request.user.is_admin or request.user.is_staff
+        # TODO: ILYA
+        # Здесь тоже можно объединить два условия и это никак не скажется
+        # на читаемости кода.

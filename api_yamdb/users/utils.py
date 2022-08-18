@@ -15,12 +15,6 @@ def generate_and_send_confrimation_code(user, data):
     data - десериализованные провалидированные данные API запроса.
     """
     token = default_token_generator.make_token(user)
-    # TODO: ILYA
-    # Зеленый комментарий :)
-    # Еще в Python есть модуль uuid в котором можно найти различные варианты
-    # генерации uuid. В реальных проектах он используется достаточно часто.
-    # Можно посмотреть в сторону uuid.uuid4().
-    # https://docs-python.ru/standart-library/modul-uuid-python/funktsija-uuid4-modulja-uuid/
     send_mail(
         subject='Confirmation code',
         message=token,

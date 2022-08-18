@@ -6,6 +6,8 @@ from reviews.models import Category, Comment, Genre, Review, Title
 
 
 class CurrentTitleDefault:
+    # TODO: ALEXEY
+    # Целый класс для одноразового использования? Не слишком практично.
     requires_context = True
 
     def __call__(self, serializer_field):
@@ -19,11 +21,21 @@ class ReviewSerializer(serializers.ModelSerializer):
         default=serializers.CurrentUserDefault()
     )
     title = serializers.HiddenField(default=CurrentTitleDefault())
+    # TODO: ALEXEY
+    # Данное поле можно убрать из сериализатора.
 
     class Meta:
         model = Review
         fields = ('id', 'text', 'author', 'score', 'pub_date', 'title')
         validators = [
+            # TODO: ALEXEY
+            # Сейчас:
+            # 1. Создаем дополнительный класс.
+            # 2. Дополнительное поле в сериализаторе.
+            # 3. Вызов валидатора UniqueTogetherValidator.
+            # Но здесь достаточно вызывать validate или validate_<field_name>
+            # и проверить, наличие объекта в базе с помощью exists()
+            # и бросить ошибку. См. замечание из CommentSerializer
             UniqueTogetherValidator(
                 queryset=Review.objects.all(),
                 fields=('title', 'author')
@@ -45,6 +57,12 @@ class CommentSerializer(serializers.ModelSerializer):
         title_id = self.context['request'].parser_context['kwargs'].get(
             'title_id')
         get_object_or_404(Title, pk=title_id)
+        # TODO: ALEXEY
+        # get_object_or_404 уместнее использовать во view-функции.
+        # Здесь стоит явно проверить, например, с помощью вызова exists()
+        # наличие объекта в базе и тогда уже бросать ошибку
+        # serializers.ValidationError.
+        # https://www.django-rest-framework.org/api-guide/exceptions/#validationerror
         return data
 
 

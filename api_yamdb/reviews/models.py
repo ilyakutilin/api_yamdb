@@ -45,6 +45,11 @@ class Title(models.Model):
     year = models.PositiveSmallIntegerField(
         verbose_name='Год производства',
         validators=[MaxValueValidator(datetime.now().year)],)
+    # TODO: ARTEM
+    # Год вычисляется при запуске сервера - он станет некорректным
+    # через год. Стоит посмотреть в сторону своего валидатора. Его стоит
+    # расположить в отдельном файле validators.py.
+    # https://stackoverflow.com/questions/41422565/django-year-validation-returns-ensure-this-value-is-less-than-or-equal-to-2016
     description = models.CharField(
         verbose_name='Описание',
         max_length=2048

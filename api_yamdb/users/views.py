@@ -30,6 +30,8 @@ class SignUpAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(
             serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            # TODO: ILYA
+            # Скобка прилипла. Стоит на строчку ниже ее перенести.
 
 
 class ObtainJWTTokenAPIView(APIView):
@@ -78,6 +80,8 @@ class UserViewSet(viewsets.ModelViewSet):
         self.object = User.objects.get(username=self.request.user.username)
         if request.method == 'PATCH':
             serializer = ProfileSerializer(
+                # TODO: ILYA
+                # Сериализатор доступен через self.get_serializer.
                 self.object,
                 data=self.request.data,
                 context={'request_user': self.request.user},
