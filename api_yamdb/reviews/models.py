@@ -56,14 +56,12 @@ class Title(models.Model):
         verbose_name='Категория',
         null=True
     )
-
     genre = models.ManyToManyField(
         Genre,
         through='GenresTitles',
         through_fields=('title', 'genre'),
         null=True,
         verbose_name='Жанр',
-
     )
 
     class Meta:
