@@ -24,8 +24,8 @@ class ReviewSerializer(serializers.ModelSerializer):
         review = Review.objects.filter(
             title__id=title_id,
             author=author
-        )
-        if review.exists():
+        ).exists()
+        if review:
             raise ValidationError(
                 detail=(f'Отзыв {author} на произведения с '
                         f'id={title_id} уже существует')
@@ -46,8 +46,8 @@ class CommentSerializer(serializers.ModelSerializer):
     def validate(self, data):
         title_id = self.context['request'].parser_context['kwargs'].get(
             'title_id')
-        title = Title.objects.filter(pk=title_id)
-        if not title.exists():
+        title = Title.objects.filter(pk=title_id).exists()
+        if not title:
             raise NotFound(
                 detail=f'Произведения с id={title_id} не существует'
             )
