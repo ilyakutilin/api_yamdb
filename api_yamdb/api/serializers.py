@@ -46,8 +46,7 @@ class CommentSerializer(serializers.ModelSerializer):
     def validate(self, data):
         title_id = self.context['request'].parser_context['kwargs'].get(
             'title_id')
-        title = Title.objects.filter(pk=title_id).exists()
-        if not title:
+        if not Title.objects.filter(pk=title_id).exists():
             raise NotFound(
                 detail=f'Произведения с id={title_id} не существует'
             )
